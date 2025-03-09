@@ -1,0 +1,60 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.setup, .game {
+    text-align: center;
+}
+
+.setup input, .setup button {
+    margin: 10px;
+    padding: 5px;
+}
+
+.score, .opponent-score, .time {
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 100px);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.hole {
+    width: 100px;
+    height: 100px;
+    background-color: #8b4513;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+}
+
+.mole {
+    width: 80px;
+    height: 80px;
+    background-color: #555;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -80px;
+    transition: bottom 0.3s;
+    cursor: pointer;
+}
+
+.mole.up {
+    bottom: 10px;
+}

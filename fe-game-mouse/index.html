@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Đập Chuột Online</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="setup">
+        <h1>Đập Chuột Online</h1>
+        <div>
+            <label>Tên của bạn: </label>
+            <input type="text" id="player-name" placeholder="Nhập tên">
+        </div>
+        <button id="create-room-btn">Tạo phòng</button>
+        <div>
+            <label>Mã phòng: </label>
+            <input type="text" id="room-id" placeholder="Nhập mã phòng">
+            <button id="join-room-btn">Tham gia</button>
+        </div>
+    </div>
+    <div class="game" style="display: none;">
+        <h2 id="player-title">Chưa có tên</h2>
+        <div class="score">Điểm: <span id="score">0</span></div>
+        <div class="opponent-score">Điểm đối thủ: <span id="opponent-score">0</span></div>
+        <div class="time">Thời gian: <span id="time">30</span>s</div>
+        <div class="grid">
+            <div class="hole"><div class="mole"></div></div>
+            <div class="hole"><div class="mole"></div></div>
+            <div class="hole"><div class="mole"></div></div>
+            <div class="hole"><div class="mole"></div></div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
