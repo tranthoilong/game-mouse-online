@@ -17,6 +17,7 @@ const exitBtn = document.getElementById('exit-btn');
 const moles = document.querySelectorAll('.mole');
 const numHolesInput = document.getElementById('num-holes');
 const gameDurationInput = document.getElementById('game-duration');
+const difficultySelect = document.getElementById('difficulty');
 
 let score = 0;
 let gameActive = false;
@@ -43,7 +44,8 @@ createRoomBtn.addEventListener('click', () => {
     }
     const numHoles = parseInt(numHolesInput.value) || 4;
     const gameDuration = parseInt(gameDurationInput.value) || 30;
-    socket.emit('createRoom', playerNameInput.value, numHoles, gameDuration);
+    const difficulty = difficultySelect.value;
+    socket.emit('createRoom', playerNameInput.value, numHoles, gameDuration, difficulty);
 });
 
 joinRoomBtn.addEventListener('click', () => {
@@ -73,7 +75,7 @@ socket.on('startGame', (data) => {
     scoreDisplay.textContent = score;
     opponentScoreDisplay.textContent = '0';
     createHoles(data.numHoles);
-    startGame(data.gameDuration);
+    startGame(data.gameDuration, data.difficulty);
 });
 
 socket.on('updateScore', (data) => {
@@ -135,7 +137,8 @@ socket.on('waitingForRestart', (data) => {
 restartBtn.addEventListener('click', () => {
     const numHoles = parseInt(numHolesInput.value) || 4;
     const gameDuration = parseInt(gameDurationInput.value) || 30;
-    socket.emit('requestRestart', roomId, numHoles, gameDuration);
+    const difficulty = difficultySelect.value;
+    socket.emit('requestRestart', roomId, numHoles, gameDuration, difficulty);
     showPopup('Bạn đã sẵn sàng! Chờ người chơi khác...');
 });
 
@@ -149,10 +152,10 @@ moles.forEach(mole => mole.addEventListener('click', function () {
     socket.emit('whack', roomId);
 }));
 
-function startGame(duration) {
+function startGame(duration, difficulty) {
     let timeLeft = duration;
     moleIndex = 0;
-    showNextMole();
+    showNextMole(difficulty);
 
     const countdown = setInterval(() => {
         timeLeft--;
@@ -167,7 +170,7 @@ function startGame(duration) {
     }, 1000);
 }
 
-function showNextMole() {
+function showNextMole(difficulty) {
     if (moleIndex >= moleSequence.length || !gameActive) return;
 
     const holes = document.querySelectorAll('.hole');
@@ -188,10 +191,17 @@ function showNextMole() {
     mole.classList.add('up');
 
     moleIndex++;
+    let delay = 1000;
+    if (difficulty === 'hard') {
+        delay = Math.random() * 500 + 500; // 500ms to 1000ms
+    } else if (difficulty === 'expert') {
+        delay = Math.random() * 200 + 300; // 300ms to 500ms
+    }
+
     setTimeout(() => {
         mole.classList.remove('up');
-        showNextMole();
-    }, 1000);
+        showNextMole(difficulty);
+    }, delay);
 }
 
 function createHoles(numHoles) {

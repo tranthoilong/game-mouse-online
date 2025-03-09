@@ -25,7 +25,7 @@ function generateMoleSequence(numHoles, length = 30) {
 io.on('connection', (socket) => {
     console.log('Người chơi kết nối:', socket.id);
 
-    socket.on('createRoom', (playerName, numHoles, gameDuration) => {
+    socket.on('createRoom', (playerName, numHoles, gameDuration, difficulty) => {
         const roomId = Math.random().toString(36).substring(7);
         rooms[roomId] = { 
             players: [{ id: socket.id, name: playerName, score: 0 }],
@@ -33,7 +33,8 @@ io.on('connection', (socket) => {
             moleSequence: generateMoleSequence(numHoles),
             readyToRestart: [],
             gameDuration: gameDuration,
-            numHoles: numHoles
+            numHoles: numHoles,
+            difficulty: difficulty
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -57,7 +58,8 @@ io.on('connection', (socket) => {
             players: rooms[roomId].players,
             moleSequence: rooms[roomId].moleSequence,
             gameDuration: rooms[roomId].gameDuration,
-            numHoles: rooms[roomId].numHoles
+            numHoles: rooms[roomId].numHoles,
+            difficulty: rooms[roomId].difficulty
         });
     });
 
@@ -78,7 +80,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('gameOver', { roomId, players: sortedPlayers });
     });
 
-    socket.on('requestRestart', (roomId, numHoles, gameDuration) => {
+    socket.on('requestRestart', (roomId, numHoles, gameDuration, difficulty) => {
         const room = rooms[roomId];
         if (!room) return;
 
@@ -86,12 +88,13 @@ io.on('connection', (socket) => {
             room.readyToRestart.push(socket.id);
         }
 
-        room.restartSettings = { numHoles, gameDuration, initiator: socket.id };
+        room.restartSettings = { numHoles, gameDuration, difficulty, initiator: socket.id };
 
         io.to(roomId).emit('waitingForRestart', { 
             waitingCount: room.readyToRestart.length, 
             numHoles, 
             gameDuration, 
+            difficulty,
             initiator: socket.id 
         });
     });
@@ -117,13 +120,15 @@ io.on('connection', (socket) => {
                 players: room.players,
                 moleSequence: room.moleSequence,
                 gameDuration: room.restartSettings.gameDuration,
-                numHoles: room.restartSettings.numHoles
+                numHoles: room.restartSettings.numHoles,
+                difficulty: room.restartSettings.difficulty
             });
         } else {
             io.to(roomId).emit('waitingForRestart', { 
                 waitingCount: room.readyToRestart.length, 
                 numHoles: room.restartSettings.numHoles, 
                 gameDuration: room.restartSettings.gameDuration, 
+                difficulty: room.restartSettings.difficulty,
                 initiator: room.restartSettings.initiator 
             });
         }
