@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('gameOver', { roomId, players: sortedPlayers });
     });
 
-    socket.on('requestRestart', (roomId) => {
+    socket.on('requestRestart', (roomId, numHoles, gameDuration) => {
         const room = rooms[roomId];
         if (!room) return;
 
@@ -86,20 +86,46 @@ io.on('connection', (socket) => {
             room.readyToRestart.push(socket.id);
         }
 
+        room.restartSettings = { numHoles, gameDuration, initiator: socket.id };
+
+        io.to(roomId).emit('waitingForRestart', { 
+            waitingCount: room.readyToRestart.length, 
+            numHoles, 
+            gameDuration, 
+            initiator: socket.id 
+        });
+    });
+
+    socket.on('confirmRestart', (roomId, confirm) => {
+        const room = rooms[roomId];
+        if (!room) return;
+
+        if (confirm) {
+            room.readyToRestart.push(socket.id);
+        } else {
+            room.readyToRestart = [];
+            return;
+        }
+
         if (room.readyToRestart.length === room.players.length) {
             room.readyToRestart = []; 
-            room.moleSequence = generateMoleSequence(room.numHoles);
+            room.moleSequence = generateMoleSequence(room.restartSettings.numHoles);
             room.players.forEach(player => player.score = 0);
 
             io.to(roomId).emit('startGame', { 
                 roomId, 
                 players: room.players,
                 moleSequence: room.moleSequence,
-                gameDuration: room.gameDuration,
-                numHoles: room.numHoles
+                gameDuration: room.restartSettings.gameDuration,
+                numHoles: room.restartSettings.numHoles
             });
         } else {
-            io.to(roomId).emit('waitingForRestart', { waitingCount: room.readyToRestart.length });
+            io.to(roomId).emit('waitingForRestart', { 
+                waitingCount: room.readyToRestart.length, 
+                numHoles: room.restartSettings.numHoles, 
+                gameDuration: room.restartSettings.gameDuration, 
+                initiator: room.restartSettings.initiator 
+            });
         }
     });
 

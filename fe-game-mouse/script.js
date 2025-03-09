@@ -100,12 +100,42 @@ socket.on('gameOver', (data) => {
     resultText.innerHTML = `<h2>Kết quả</h2>${ranking}`;
 });
 
+function showToast(message, onAccept, onDecline) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const acceptBtn = document.getElementById('toast-accept');
+    const declineBtn = document.getElementById('toast-decline');
+
+    toastMessage.textContent = message;
+    toast.classList.add('show');
+
+    acceptBtn.onclick = () => {
+        toast.classList.remove('show');
+        onAccept();
+    };
+
+    declineBtn.onclick = () => {
+        toast.classList.remove('show');
+        onDecline();
+    };
+}
+
 socket.on('waitingForRestart', (data) => {
-    showPopup(`Đang chờ người chơi khác... (${data.waitingCount}/2 đã sẵn sàng)`);
+    if (data.initiator !== playerId) {
+        showToast(
+            `Người chơi khác muốn chơi lại với ${data.numHoles} ô và thời gian ${data.gameDuration} giây. Bạn có đồng ý không?`,
+            () => socket.emit('confirmRestart', roomId, true),
+            () => socket.emit('confirmRestart', roomId, false)
+        );
+    } else {
+        showPopup(`Đang chờ người chơi khác... (${data.waitingCount}/2 đã sẵn sàng)`);
+    }
 });
 
 restartBtn.addEventListener('click', () => {
-    socket.emit('requestRestart', roomId);
+    const numHoles = parseInt(numHolesInput.value) || 4;
+    const gameDuration = parseInt(gameDurationInput.value) || 30;
+    socket.emit('requestRestart', roomId, numHoles, gameDuration);
     showPopup('Bạn đã sẵn sàng! Chờ người chơi khác...');
 });
 
