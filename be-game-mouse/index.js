@@ -14,10 +14,10 @@ const io = socketIo(server, {
 
 let rooms = {};
 
-function generateMoleSequence(length = 30) {
+function generateMoleSequence(numHoles, length = 30) {
     let sequence = [];
     for (let i = 0; i < length; i++) {
-        sequence.push(Math.floor(Math.random() * 4)); 
+        sequence.push(Math.floor(Math.random() * numHoles)); 
     }
     return sequence;
 }
@@ -25,13 +25,15 @@ function generateMoleSequence(length = 30) {
 io.on('connection', (socket) => {
     console.log('Người chơi kết nối:', socket.id);
 
-    socket.on('createRoom', (playerName) => {
+    socket.on('createRoom', (playerName, numHoles, gameDuration) => {
         const roomId = Math.random().toString(36).substring(7);
         rooms[roomId] = { 
             players: [{ id: socket.id, name: playerName, score: 0 }],
             gameStarted: false,
-            moleSequence: generateMoleSequence(),
-            readyToRestart: []
+            moleSequence: generateMoleSequence(numHoles),
+            readyToRestart: [],
+            gameDuration: gameDuration,
+            numHoles: numHoles
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -53,7 +55,9 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('startGame', { 
             roomId, 
             players: rooms[roomId].players,
-            moleSequence: rooms[roomId].moleSequence
+            moleSequence: rooms[roomId].moleSequence,
+            gameDuration: rooms[roomId].gameDuration,
+            numHoles: rooms[roomId].numHoles
         });
     });
 
@@ -84,13 +88,15 @@ io.on('connection', (socket) => {
 
         if (room.readyToRestart.length === room.players.length) {
             room.readyToRestart = []; 
-            room.moleSequence = generateMoleSequence();
+            room.moleSequence = generateMoleSequence(room.numHoles);
             room.players.forEach(player => player.score = 0);
 
             io.to(roomId).emit('startGame', { 
                 roomId, 
                 players: room.players,
-                moleSequence: room.moleSequence
+                moleSequence: room.moleSequence,
+                gameDuration: room.gameDuration,
+                numHoles: room.numHoles
             });
         } else {
             io.to(roomId).emit('waitingForRestart', { waitingCount: room.readyToRestart.length });

@@ -15,6 +15,8 @@ const resultText = document.getElementById('result-text');
 const restartBtn = document.getElementById('restart-btn');
 const exitBtn = document.getElementById('exit-btn');
 const moles = document.querySelectorAll('.mole');
+const numHolesInput = document.getElementById('num-holes');
+const gameDurationInput = document.getElementById('game-duration');
 
 let score = 0;
 let gameActive = false;
@@ -39,7 +41,9 @@ createRoomBtn.addEventListener('click', () => {
         showPopup('Vui lòng nhập tên!');
         return;
     }
-    socket.emit('createRoom', playerNameInput.value);
+    const numHoles = parseInt(numHolesInput.value) || 4;
+    const gameDuration = parseInt(gameDurationInput.value) || 30;
+    socket.emit('createRoom', playerNameInput.value, numHoles, gameDuration);
 });
 
 joinRoomBtn.addEventListener('click', () => {
@@ -68,7 +72,8 @@ socket.on('startGame', (data) => {
     score = 0;
     scoreDisplay.textContent = score;
     opponentScoreDisplay.textContent = '0';
-    startGame();
+    createHoles(data.numHoles);
+    startGame(data.gameDuration);
 });
 
 socket.on('updateScore', (data) => {
@@ -114,8 +119,8 @@ moles.forEach(mole => mole.addEventListener('click', function () {
     socket.emit('whack', roomId);
 }));
 
-function startGame() {
-    let timeLeft = 30;
+function startGame(duration) {
+    let timeLeft = duration;
     moleIndex = 0;
     showNextMole();
 
@@ -157,4 +162,22 @@ function showNextMole() {
         mole.classList.remove('up');
         showNextMole();
     }, 1000);
+}
+
+function createHoles(numHoles) {
+    const grid = document.querySelector('.grid');
+    grid.innerHTML = ''; // Clear existing holes
+    for (let i = 0; i < numHoles; i++) {
+        const hole = document.createElement('div');
+        hole.classList.add('hole');
+        const mole = document.createElement('div');
+        mole.classList.add('mole');
+        mole.addEventListener('click', function () {
+            if (!gameActive || !roomId || !this.classList.contains('up')) return;
+            this.classList.remove('up');
+            socket.emit('whack', roomId);
+        });
+        hole.appendChild(mole);
+        grid.appendChild(hole);
+    }
 }
