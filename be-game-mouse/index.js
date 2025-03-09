@@ -17,7 +17,7 @@ let rooms = {};
 function generateMoleSequence(length = 30) {
     let sequence = [];
     for (let i = 0; i < length; i++) {
-        sequence.push(Math.floor(Math.random() * 4)); // 4 lỗ chuột
+        sequence.push(Math.floor(Math.random() * 4)); 
     }
     return sequence;
 }
@@ -25,7 +25,6 @@ function generateMoleSequence(length = 30) {
 io.on('connection', (socket) => {
     console.log('Người chơi kết nối:', socket.id);
 
-    // 🎮 Tạo phòng
     socket.on('createRoom', (playerName) => {
         const roomId = Math.random().toString(36).substring(7);
         rooms[roomId] = { 
@@ -35,10 +34,8 @@ io.on('connection', (socket) => {
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
-        console.log(`Phòng ${roomId} được tạo bởi ${playerName}`);
     });
 
-    // 🎮 Tham gia phòng
     socket.on('joinRoom', (roomId, playerName) => {
         if (!rooms[roomId]) {
             socket.emit('error', { message: 'Phòng không tồn tại' });
@@ -57,10 +54,8 @@ io.on('connection', (socket) => {
             players: rooms[roomId].players,
             moleSequence: rooms[roomId].moleSequence
         });
-        console.log(`${playerName} đã tham gia phòng ${roomId}`);
     });
 
-    // 🔨 Xử lý whack
     socket.on('whack', (roomId) => {
         const room = rooms[roomId];
         if (!room || !room.players) return;
@@ -72,13 +67,27 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updateScore', { roomId, players: room.players });
     });
 
-    // 🏁 Kết thúc game
     socket.on('endGame', (roomId) => {
         if (!rooms[roomId]) return;
-        io.to(roomId).emit('updateScore', { roomId, players: rooms[roomId].players });
+
+        const sortedPlayers = [...rooms[roomId].players].sort((a, b) => b.score - a.score);
+
+        io.to(roomId).emit('gameOver', { roomId, players: sortedPlayers });
     });
 
-    // ❌ Xử lý ngắt kết nối
+    socket.on('restartGame', (roomId) => {
+        if (!rooms[roomId]) return;
+
+        rooms[roomId].moleSequence = generateMoleSequence();
+        rooms[roomId].players.forEach(player => player.score = 0);
+
+        io.to(roomId).emit('startGame', { 
+            roomId, 
+            players: rooms[roomId].players,
+            moleSequence: rooms[roomId].moleSequence
+        });
+    });
+
     socket.on('disconnect', () => {
         console.log('Người chơi ngắt kết nối:', socket.id);
         for (const roomId in rooms) {
@@ -88,7 +97,6 @@ io.on('connection', (socket) => {
                 room.players.splice(playerIndex, 1);
                 if (room.players.length === 0) {
                     delete rooms[roomId];
-                    console.log(`Phòng ${roomId} đã bị xóa`);
                 } else {
                     io.to(roomId).emit('updateScore', { roomId, players: room.players });
                 }

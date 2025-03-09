@@ -20,6 +20,7 @@
             <button id="join-room-btn">Tham gia</button>
         </div>
     </div>
+
     <div class="game" style="display: none;">
         <h2 id="player-title">Chưa có tên</h2>
         <div class="score">Điểm: <span id="score">0</span></div>
@@ -32,6 +33,14 @@
             <div class="hole"><div class="mole"></div></div>
         </div>
     </div>
+
+    <div class="result" style="display: none;">
+        <h2>Kết quả</h2>
+        <div id="result-text"></div>
+        <button id="restart-btn">Chơi lại</button>
+        <button id="exit-btn">Rời phòng</button>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
     <script src="script.js"></script>
 </body>

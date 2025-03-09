@@ -6,11 +6,15 @@ const createRoomBtn = document.getElementById('create-room-btn');
 const joinRoomBtn = document.getElementById('join-room-btn');
 const setupScreen = document.querySelector('.setup');
 const gameScreen = document.querySelector('.game');
+const resultScreen = document.querySelector('.result');
 const playerTitle = document.getElementById('player-title');
 const scoreDisplay = document.getElementById('score');
 const opponentScoreDisplay = document.getElementById('opponent-score');
 const timeDisplay = document.getElementById('time');
 const moles = document.querySelectorAll('.mole');
+const resultText = document.getElementById('result-text');
+const restartBtn = document.getElementById('restart-btn');
+const exitBtn = document.getElementById('exit-btn');
 
 let score = 0;
 let gameActive = false;
@@ -19,7 +23,6 @@ let playerId = null;
 let moleSequence = [];
 let moleIndex = 0;
 
-// 👉 Tạo phòng
 createRoomBtn.addEventListener('click', () => {
     if (!playerNameInput.value) {
         alert('Vui lòng nhập tên!');
@@ -28,7 +31,6 @@ createRoomBtn.addEventListener('click', () => {
     socket.emit('createRoom', playerNameInput.value);
 });
 
-// 👉 Tham gia phòng
 joinRoomBtn.addEventListener('click', () => {
     if (!playerNameInput.value || !roomIdInput.value) {
         alert('Vui lòng nhập tên và mã phòng!');
@@ -37,20 +39,19 @@ joinRoomBtn.addEventListener('click', () => {
     socket.emit('joinRoom', roomIdInput.value, playerNameInput.value);
 });
 
-// 🎮 Khi phòng được tạo
 socket.on('roomCreated', (data) => {
     roomId = data.roomId;
     playerId = socket.id;
     alert(`Mã phòng của bạn: ${roomId}`);
 });
 
-// 🎮 Khi game bắt đầu
 socket.on('startGame', (data) => {
     roomId = data.roomId;
     playerId = socket.id;
     moleSequence = data.moleSequence;
     setupScreen.style.display = 'none';
     gameScreen.style.display = 'block';
+    resultScreen.style.display = 'none';
     playerTitle.textContent = playerNameInput.value;
     gameActive = true;
     score = 0;
@@ -59,7 +60,6 @@ socket.on('startGame', (data) => {
     startGame();
 });
 
-// 🎯 Cập nhật điểm số
 socket.on('updateScore', (data) => {
     const self = data.players.find(p => p.id === playerId);
     const opponent = data.players.find(p => p.id !== playerId);
@@ -76,27 +76,32 @@ socket.on('updateScore', (data) => {
     }
 });
 
-// 🎯 Hiển thị chuột theo danh sách server gửi
-function showNextMole() {
-    if (moleIndex >= moleSequence.length || !gameActive) return;
+socket.on('gameOver', (data) => {
+    gameScreen.style.display = 'none';
+    resultScreen.style.display = 'block';
 
-    moles.forEach(mole => mole.classList.remove('up'));
-    const randomHole = document.querySelectorAll('.hole')[moleSequence[moleIndex]];
-    const mole = randomHole.querySelector('.mole');
-    mole.classList.add('up');
+    const ranking = data.players.map(p => `${p.name}: ${p.score} điểm`).join('<br>');
+    resultText.innerHTML = `<h2>Kết quả</h2>${ranking}`;
+});
 
-    moleIndex++;
-    setTimeout(() => {
-        mole.classList.remove('up');
-        showNextMole();
-    }, 1000);
-}
+restartBtn.addEventListener('click', () => {
+    socket.emit('restartGame', roomId);
+});
 
-// 🏁 Bắt đầu game
+exitBtn.addEventListener('click', () => {
+    location.reload();
+});
+
+moles.forEach(mole => mole.addEventListener('click', function () {
+    if (!gameActive || !roomId || !this.classList.contains('up')) return;
+    this.classList.remove('up');
+    socket.emit('whack', roomId);
+}));
+
 function startGame() {
     let timeLeft = 30;
     moleIndex = 0;
-    showNextMole();
+    showNextMole(); 
 
     const countdown = setInterval(() => {
         timeLeft--;
@@ -111,11 +116,29 @@ function startGame() {
     }, 1000);
 }
 
-// 🔨 Khi nhấn vào chuột chũi
-function whack(e) {
-    if (!gameActive || !roomId || !this.classList.contains('up')) return;
-    this.classList.remove('up');
-    socket.emit('whack', roomId);
-}
+function showNextMole() {
+    if (moleIndex >= moleSequence.length || !gameActive) return;
 
-moles.forEach(mole => mole.addEventListener('click', whack));
+    const holes = document.querySelectorAll('.hole');
+    if (holes.length < 4) {
+        console.error("⚠️ Không đủ số lượng lỗ chuột!");
+        return;
+    }
+
+    moles.forEach(mole => mole.classList.remove('up'));
+
+    const randomHole = holes[moleSequence[moleIndex]];
+    if (!randomHole) {
+        console.error(`⚠️ Không tìm thấy hole tại index: ${moleSequence[moleIndex]}`);
+        return;
+    }
+
+    const mole = randomHole.querySelector('.mole');
+    mole.classList.add('up');
+
+    moleIndex++;
+    setTimeout(() => {
+        mole.classList.remove('up');
+        showNextMole();
+    }, 1000);
+}
