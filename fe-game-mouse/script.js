@@ -16,6 +16,8 @@ let score = 0;
 let gameActive = false;
 let roomId = null;
 let playerId = null;
+let moleSequence = [];
+let moleIndex = 0;
 
 // 👉 Tạo phòng
 createRoomBtn.addEventListener('click', () => {
@@ -46,6 +48,7 @@ socket.on('roomCreated', (data) => {
 socket.on('startGame', (data) => {
     roomId = data.roomId;
     playerId = socket.id;
+    moleSequence = data.moleSequence;
     setupScreen.style.display = 'none';
     gameScreen.style.display = 'block';
     playerTitle.textContent = playerNameInput.value;
@@ -58,8 +61,6 @@ socket.on('startGame', (data) => {
 
 // 🎯 Cập nhật điểm số
 socket.on('updateScore', (data) => {
-    console.log('Nhận updateScore:', data);
-
     const self = data.players.find(p => p.id === playerId);
     const opponent = data.players.find(p => p.id !== playerId);
 
@@ -75,28 +76,27 @@ socket.on('updateScore', (data) => {
     }
 });
 
-// ⚠️ Nhận lỗi từ server
-socket.on('error', (data) => {
-    alert(data.message);
-    console.log('Lỗi từ server:', data.message);
-});
+// 🎯 Hiển thị chuột theo danh sách server gửi
+function showNextMole() {
+    if (moleIndex >= moleSequence.length || !gameActive) return;
 
-// 🎯 Ngẫu nhiên hiển thị chuột chũi
-function randomMole() {
     moles.forEach(mole => mole.classList.remove('up'));
-    const randomHole = document.querySelectorAll('.hole')[Math.floor(Math.random() * 4)];
+    const randomHole = document.querySelectorAll('.hole')[moleSequence[moleIndex]];
     const mole = randomHole.querySelector('.mole');
     mole.classList.add('up');
+
+    moleIndex++;
     setTimeout(() => {
         mole.classList.remove('up');
-        if (gameActive) randomMole();
+        showNextMole();
     }, 1000);
 }
 
 // 🏁 Bắt đầu game
 function startGame() {
     let timeLeft = 30;
-    randomMole();
+    moleIndex = 0;
+    showNextMole();
 
     const countdown = setInterval(() => {
         timeLeft--;

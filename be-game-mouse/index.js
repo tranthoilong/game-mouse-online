@@ -14,6 +14,14 @@ const io = socketIo(server, {
 
 let rooms = {};
 
+function generateMoleSequence(length = 30) {
+    let sequence = [];
+    for (let i = 0; i < length; i++) {
+        sequence.push(Math.floor(Math.random() * 4)); // 4 lỗ chuột
+    }
+    return sequence;
+}
+
 io.on('connection', (socket) => {
     console.log('Người chơi kết nối:', socket.id);
 
@@ -22,11 +30,12 @@ io.on('connection', (socket) => {
         const roomId = Math.random().toString(36).substring(7);
         rooms[roomId] = { 
             players: [{ id: socket.id, name: playerName, score: 0 }],
-            gameStarted: false
+            gameStarted: false,
+            moleSequence: generateMoleSequence()
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
-        console.log(`Phòng ${roomId} được tạo bởi ${playerName} (ID: ${socket.id})`);
+        console.log(`Phòng ${roomId} được tạo bởi ${playerName}`);
     });
 
     // 🎮 Tham gia phòng
@@ -42,8 +51,13 @@ io.on('connection', (socket) => {
         rooms[roomId].players.push({ id: socket.id, name: playerName, score: 0 });
         socket.join(roomId);
         rooms[roomId].gameStarted = true;
-        io.to(roomId).emit('startGame', { roomId, players: rooms[roomId].players });
-        console.log(`${playerName} đã tham gia phòng ${roomId} (ID: ${socket.id})`);
+
+        io.to(roomId).emit('startGame', { 
+            roomId, 
+            players: rooms[roomId].players,
+            moleSequence: rooms[roomId].moleSequence
+        });
+        console.log(`${playerName} đã tham gia phòng ${roomId}`);
     });
 
     // 🔨 Xử lý whack
@@ -55,22 +69,16 @@ io.on('connection', (socket) => {
         if (!player) return;
 
         player.score += 1;
-        console.log(`Whack từ ${player.name} (ID: ${socket.id}) trong phòng ${roomId}: ${player.score}`);
-
-        // Gửi lại toàn bộ thông tin phòng
         io.to(roomId).emit('updateScore', { roomId, players: room.players });
     });
 
     // 🏁 Kết thúc game
     socket.on('endGame', (roomId) => {
-        const room = rooms[roomId];
-        if (!room) return;
-
-        console.log(`Game kết thúc trong phòng ${roomId}`);
-        io.to(roomId).emit('updateScore', { roomId, players: room.players });
+        if (!rooms[roomId]) return;
+        io.to(roomId).emit('updateScore', { roomId, players: rooms[roomId].players });
     });
 
-    // ❌ Xử lý khi người chơi rời đi
+    // ❌ Xử lý ngắt kết nối
     socket.on('disconnect', () => {
         console.log('Người chơi ngắt kết nối:', socket.id);
         for (const roomId in rooms) {
