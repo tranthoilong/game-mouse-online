@@ -15,6 +15,8 @@ const moles = document.querySelectorAll('.mole');
 const resultText = document.getElementById('result-text');
 const restartBtn = document.getElementById('restart-btn');
 const exitBtn = document.getElementById('exit-btn');
+const popup = document.getElementById('popup');
+const popupMessage = document.getElementById('popup-message');
 
 let score = 0;
 let gameActive = false;
@@ -23,9 +25,18 @@ let playerId = null;
 let moleSequence = [];
 let moleIndex = 0;
 
+function showPopup(message) {
+    popupMessage.textContent = message;
+    popup.classList.add('show');
+
+    setTimeout(() => {
+        popup.classList.remove('show');
+    }, 3000); 
+}
+
 createRoomBtn.addEventListener('click', () => {
     if (!playerNameInput.value) {
-        alert('Vui lòng nhập tên!');
+        showPopup('Vui lòng nhập tên!');
         return;
     }
     socket.emit('createRoom', playerNameInput.value);
@@ -33,7 +44,7 @@ createRoomBtn.addEventListener('click', () => {
 
 joinRoomBtn.addEventListener('click', () => {
     if (!playerNameInput.value || !roomIdInput.value) {
-        alert('Vui lòng nhập tên và mã phòng!');
+        showPopup('Vui lòng nhập tên và mã phòng!');
         return;
     }
     socket.emit('joinRoom', roomIdInput.value, playerNameInput.value);
@@ -42,7 +53,7 @@ joinRoomBtn.addEventListener('click', () => {
 socket.on('roomCreated', (data) => {
     roomId = data.roomId;
     playerId = socket.id;
-    alert(`Mã phòng của bạn: ${roomId}`);
+    showPopup(`Mã phòng của bạn: ${roomId}`);
 });
 
 socket.on('startGame', (data) => {
@@ -86,6 +97,7 @@ socket.on('gameOver', (data) => {
 
 restartBtn.addEventListener('click', () => {
     socket.emit('restartGame', roomId);
+    showPopup('Trò chơi đang khởi động lại...');
 });
 
 exitBtn.addEventListener('click', () => {
