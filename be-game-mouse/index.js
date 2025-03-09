@@ -30,7 +30,8 @@ io.on('connection', (socket) => {
         rooms[roomId] = { 
             players: [{ id: socket.id, name: playerName, score: 0 }],
             gameStarted: false,
-            moleSequence: generateMoleSequence()
+            moleSequence: generateMoleSequence(),
+            readyToRestart: []
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -69,23 +70,31 @@ io.on('connection', (socket) => {
 
     socket.on('endGame', (roomId) => {
         if (!rooms[roomId]) return;
-
         const sortedPlayers = [...rooms[roomId].players].sort((a, b) => b.score - a.score);
-
         io.to(roomId).emit('gameOver', { roomId, players: sortedPlayers });
     });
 
-    socket.on('restartGame', (roomId) => {
-        if (!rooms[roomId]) return;
+    socket.on('requestRestart', (roomId) => {
+        const room = rooms[roomId];
+        if (!room) return;
 
-        rooms[roomId].moleSequence = generateMoleSequence();
-        rooms[roomId].players.forEach(player => player.score = 0);
+        if (!room.readyToRestart.includes(socket.id)) {
+            room.readyToRestart.push(socket.id);
+        }
 
-        io.to(roomId).emit('startGame', { 
-            roomId, 
-            players: rooms[roomId].players,
-            moleSequence: rooms[roomId].moleSequence
-        });
+        if (room.readyToRestart.length === room.players.length) {
+            room.readyToRestart = []; 
+            room.moleSequence = generateMoleSequence();
+            room.players.forEach(player => player.score = 0);
+
+            io.to(roomId).emit('startGame', { 
+                roomId, 
+                players: room.players,
+                moleSequence: room.moleSequence
+            });
+        } else {
+            io.to(roomId).emit('waitingForRestart', { waitingCount: room.readyToRestart.length });
+        }
     });
 
     socket.on('disconnect', () => {

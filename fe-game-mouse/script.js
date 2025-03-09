@@ -11,12 +11,10 @@ const playerTitle = document.getElementById('player-title');
 const scoreDisplay = document.getElementById('score');
 const opponentScoreDisplay = document.getElementById('opponent-score');
 const timeDisplay = document.getElementById('time');
-const moles = document.querySelectorAll('.mole');
 const resultText = document.getElementById('result-text');
 const restartBtn = document.getElementById('restart-btn');
 const exitBtn = document.getElementById('exit-btn');
-const popup = document.getElementById('popup');
-const popupMessage = document.getElementById('popup-message');
+const moles = document.querySelectorAll('.mole');
 
 let score = 0;
 let gameActive = false;
@@ -26,12 +24,14 @@ let moleSequence = [];
 let moleIndex = 0;
 
 function showPopup(message) {
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popup-message');
     popupMessage.textContent = message;
     popup.classList.add('show');
 
     setTimeout(() => {
         popup.classList.remove('show');
-    }, 3000); 
+    }, 3000);
 }
 
 createRoomBtn.addEventListener('click', () => {
@@ -95,9 +95,13 @@ socket.on('gameOver', (data) => {
     resultText.innerHTML = `<h2>Kết quả</h2>${ranking}`;
 });
 
+socket.on('waitingForRestart', (data) => {
+    showPopup(`Đang chờ người chơi khác... (${data.waitingCount}/2 đã sẵn sàng)`);
+});
+
 restartBtn.addEventListener('click', () => {
-    socket.emit('restartGame', roomId);
-    showPopup('Trò chơi đang khởi động lại...');
+    socket.emit('requestRestart', roomId);
+    showPopup('Bạn đã sẵn sàng! Chờ người chơi khác...');
 });
 
 exitBtn.addEventListener('click', () => {
@@ -113,7 +117,7 @@ moles.forEach(mole => mole.addEventListener('click', function () {
 function startGame() {
     let timeLeft = 30;
     moleIndex = 0;
-    showNextMole(); 
+    showNextMole();
 
     const countdown = setInterval(() => {
         timeLeft--;
