@@ -193,9 +193,9 @@ function showNextMole(difficulty) {
     moleIndex++;
     let delay = 1000;
     if (difficulty === 'hard') {
-        delay = Math.random() * 500 + 500; // 500ms to 1000ms
+        delay = Math.random() * 500 + 500; 
     } else if (difficulty === 'expert') {
-        delay = Math.random() * 200 + 300; // 300ms to 500ms
+        delay = Math.random() * 200 + 300; 
     }
 
     setTimeout(() => {
@@ -206,7 +206,7 @@ function showNextMole(difficulty) {
 
 function createHoles(numHoles) {
     const grid = document.querySelector('.grid');
-    grid.innerHTML = ''; // Clear existing holes
+    grid.innerHTML = '';
     for (let i = 0; i < numHoles; i++) {
         const hole = document.createElement('div');
         hole.classList.add('hole');
