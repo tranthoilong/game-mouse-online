@@ -8,41 +8,56 @@
 </head>
 <body>
     <div class="setup">
-        <h1>Đập Chuột Online</h1>
-        <div>
-            <label>Tên của bạn: </label>
-            <input type="text" id="player-name" placeholder="Nhập tên">
-        </div>
-        <div>
-            <label>Số ô: </label>
-            <input type="number" id="num-holes" value="4" min="1" max="10">
-        </div>
-        <div>
-            <label>Thời gian chơi (s): </label>
-            <input type="number" id="game-duration" value="30" min="10" max="120">
-        </div>
-        <div>
-            <label>Độ khó: </label>
-            <select id="difficulty">
-                <option value="easy">Dễ</option>
-                <option value="medium" selected>Trung bình</option>
-                <option value="hard">Khó</option>
-                <option value="expert">Cao thủ</option>
-            </select>
-        </div>
-        <button id="create-room-btn">Tạo phòng</button>
-        <div>
-            <label>Mã phòng: </label>
-            <input type="text" id="room-id" placeholder="Nhập mã phòng">
-            <button id="join-room-btn">Tham gia</button>
+        <h1>🐭 Đập Chuột Online 🎮</h1>
+        <div class="setup-container">
+            <div class="setup-item">
+                <label for="player-name">👤 Tên của bạn:</label>
+                <input type="text" id="player-name" placeholder="Nhập tên của bạn">
+            </div>
+            
+            <div class="setup-item">
+                <label for="num-holes">🎯 Số ô:</label>
+                <input type="number" id="num-holes" value="4" min="1" max="10">
+            </div>
+            
+            <div class="setup-item">
+                <label for="game-duration">⏱️ Thời gian chơi (giây):</label>
+                <input type="number" id="game-duration" value="30" min="10" max="120">
+            </div>
+            
+            <div class="setup-item">
+                <label for="difficulty">🎚️ Độ khó:</label>
+                <select id="difficulty">
+                    <option value="easy">Dễ</option>
+                    <option value="medium" selected>Trung bình</option>
+                    <option value="hard">Khó</option>
+                    <option value="expert">Cao thủ</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="create-room-btn" class="primary-btn">🎲 Tạo phòng mới</button>
+            </div>
+
+            <div class="setup-item join-room">
+                <label for="room-id">🔑 Mã phòng:</label>
+                <div class="join-room-controls">
+                    <input type="text" id="room-id" placeholder="Nhập mã phòng">
+                    <button id="join-room-btn" class="secondary-btn">➡️ Tham gia</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="game" style="display: none;">
-        <h2 id="player-title">Chưa có tên</h2>
-        <div class="score">Điểm: <span id="score">0</span></div>
-        <div class="opponent-score">Điểm đối thủ: <span id="opponent-score">0</span></div>
-        <div class="time">Thời gian: <span id="time">30</span>s</div>
+        <div class="game-header">
+            <h2 id="player-title">Chưa có tên</h2>
+            <div class="game-stats">
+                <div class="score">🎯 Điểm: <span id="score">0</span></div>
+                <div class="opponent-score">🏆 Điểm đối thủ: <span id="opponent-score">0</span></div>
+                <div class="time">⏱️ Thời gian: <span id="time">30</span>s</div>
+            </div>
+        </div>
         <div class="grid">
             <div class="hole"><div class="mole"></div></div>
             <div class="hole"><div class="mole"></div></div>
@@ -52,17 +67,27 @@
     </div>
 
     <div class="result" style="display: none;">
-        <div id="result-text"></div>
-        <button id="restart-btn">Chơi lại</button>
-        <button id="exit-btn">Rời phòng</button>
+        <div id="result-text" class="result-message"></div>
+        <div class="button-group">
+            <button id="restart-btn" class="primary-btn">🔄 Chơi lại</button>
+            <button id="exit-btn" class="secondary-btn">🚪 Rời phòng</button>
+        </div>
     </div>
+
     <div id="popup" class="popup">
-        <span id="popup-message"></span>
+        <div class="popup-content">
+            <span id="popup-message"></span>
+        </div>
     </div>
+
     <div id="toast" class="toast">
-        <span id="toast-message"></span>
-        <button id="toast-accept">Đồng ý</button>
-        <button id="toast-decline">Từ chối</button>
+        <div class="toast-content">
+            <span id="toast-message"></span>
+            <div class="toast-actions">
+                <button id="toast-accept" class="primary-btn">✅ Đồng ý</button>
+                <button id="toast-decline" class="secondary-btn">❌ Từ chối</button>
+            </div>
+        </div>
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
