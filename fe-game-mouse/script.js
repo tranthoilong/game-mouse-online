@@ -1,4 +1,3 @@
-// Initialize socket connection
 const socket = io('http://localhost:3673');
 
 const playerNameInput = document.getElementById('player-name');
