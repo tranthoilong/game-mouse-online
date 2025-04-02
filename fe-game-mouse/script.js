@@ -1,3 +1,4 @@
+// Initialize socket connection
 const socket = io('http://localhost:3673');
 
 const playerNameInput = document.getElementById('player-name');
@@ -18,6 +19,7 @@ const moles = document.querySelectorAll('.mole');
 const numHolesInput = document.getElementById('num-holes');
 const gameDurationInput = document.getElementById('game-duration');
 const difficultySelect = document.getElementById('difficulty');
+const idRoom = document.getElementById('id-room');
 
 let score = 0;
 let gameActive = false;
@@ -60,6 +62,7 @@ socket.on('roomCreated', (data) => {
     roomId = data.roomId;
     playerId = socket.id;
     showPopup(`Mã phòng của bạn: ${roomId}`);
+    idRoom.textContent = '🔑 Mã phòng: ' + roomId;
 });
 
 socket.on('startGame', (data) => {
